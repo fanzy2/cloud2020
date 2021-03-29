@@ -3,11 +3,14 @@ package com.atguigu.springcloud.controller;
 import com.atguigu.springcloud.service.PaymentService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cloud.client.ServiceInstance;
+import org.springframework.cloud.client.discovery.DiscoveryClient;
 import org.springframework.web.bind.annotation.*;
 import com.atguigu.springcloud.entities.CommonResult;
 import com.atguigu.springcloud.entities.Payment;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @RestController
 @Slf4j
@@ -15,8 +18,11 @@ import javax.annotation.Resource;
 public class PaymentController {
     @Resource
     private PaymentService paymentService;
+    @Resource
+    private DiscoveryClient discoveryClient;
     @Value("${server.port}")
     private String serverPort;
+
 
     @PostMapping("/create")
     public CommonResult create(@RequestBody Payment payment){
@@ -37,6 +43,18 @@ public class PaymentController {
         }else{
             return new CommonResult(44,"查询失败没有对应的ID"+id,null);
         }
+    }
+    @GetMapping("/discovery")
+    public Object discovery(){
+        List<String> services= discoveryClient.getServices();
+        for (String elemment:services){
+            log.info("elemment"+elemment);
+        }
+        List<ServiceInstance>  instances=discoveryClient.getInstances("CLOUD-PAYMENT-SERVICE");
+        for (ServiceInstance instance:instances){
+            log.info(instance.getServiceId()+"\t"+instance.getHost()+"\t"+instance.getPort()+"\t"+instance.getPort());
+        }
+        return this.discoveryClient;
     }
 
 }
